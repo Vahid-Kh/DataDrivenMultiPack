@@ -255,7 +255,7 @@ for week in weeknum:
     # label[1], label[2] = 'LT evaporation temp', 'AK-PC 782A:   Suction temp. To-LT'
     # label[1], label[2] = 'MT evaporation temp', 'AK-PC 782A:   Suction temp. To-MT'
     # label[1], label[2] = 'Tair external air', 'AK-PC 782A:   Cond. temp.'
-    label[1], label[2] = 'T3 GC Outlet', 'AK-PC 782A:   Running capacity IT'
+    # label[1], label[2] = 'T3 GC Outlet', 'AK-PC 782A:   Running capacity IT'
     # label[1], label[2] = 'Tair external air', 'AK-PC 782A:   Sc3'
     # label[1], label[2] = 'T17 Inlet AHU (heating)', 'AK-PC 782A:   Sc3'
     # label[1], label[2] = 'P1 discharge', 'AK-PC 782A:   Pgc'
@@ -269,7 +269,7 @@ for week in weeknum:
     # label[1], label[2] = '', ''
 
     # label[1], label[2] = 'T1 MT discharge', 'AK-PC 782A:   Running capacity MT'
-    label[1], label[2] = 'AK-PC 782A:   Running capacity IT', 'T3 GC Outlet'
+    # label[1], label[2] = 'AK-PC 782A:   Running capacity IT', 'T3 GC Outlet'
     # label[1], label[2] = 'DHW water',      'AK-PC 782A:   Running capacity IT'
     # label[1], label[2] = 'M4 LT liquid', 'AK-PC 782A:   Tw enable'
     # label[1], label[2] = 'M1 AHU liquid (cooling)', 'AK-PC 782A:   Running capacity IT'
