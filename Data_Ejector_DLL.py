@@ -1,0 +1,226 @@
+
+"""
+
+Dataframe CSV format creator for :
+
+        1 - raw data +
+         2 - estimated mass flow rates based on data-driven model +
+          3 - ejector estimations using CoolSelector 2 DLL files
+"""
+
+""" Libraries import """
+
+import numpy as np
+import pandas as pd
+import matlab.engine
+from TDN import PSI
+from functions import plot_3,plot_4,plot_5
+import matplotlib.pyplot as plt
+
+"""----------CNR DATA-----------"""
+W28_ACLP1_HP1_ALC1 = "Archive/Data_Week_28"
+W29_ACLP1_HP0_ALC1 = "Archive/Data_Week_29"
+W30_ACLP1_HP0_ALC0 = "Archive/Data_Week_30"
+W31_ACLP1_HP1_ALC0 = "Archive/Data_Week_31"
+W32_ACDX1_HP0_ALC1 = "Archive/Data_Week_32"
+W33_ACDX1_HP0_ALC0 = "Archive/Data_Week_33"
+W34_ACDX1_HP1_ALC0 = "Archive/Data_Week_34"
+W35_ACDX1_HP1_ALC1 = "Archive/Data_Week_35"
+
+
+PDM = [W28_ACLP1_HP1_ALC1, W29_ACLP1_HP0_ALC1, W30_ACLP1_HP0_ALC0, W31_ACLP1_HP1_ALC0,
+       W32_ACDX1_HP0_ALC1, W33_ACDX1_HP0_ALC0, W34_ACDX1_HP1_ALC0, W35_ACDX1_HP1_ALC1]
+
+"""________________________________________________________________________________"""
+"""________________________________________________________________________________"""
+
+for weeknum in [28, 29, 30, 31, 32, 33, 34, 35]:
+
+    w = weeknum - 28
+    print('For week ::::: ', weeknum)
+    """--------------------------------"""
+    """--------Data_Week_Calc_CNR------"""
+    """--------------------------------"""
+    filename = PDM[w]
+    """ DataFrame read from CSV file, na_filter=False, skip_blank_lines=False """
+    df = pd.read_csv(filename, sep=',', na_filter=True, skip_blank_lines=True, low_memory=False)
+
+    """
+    Ejector Rom Model Usage:
+    Units: P [Pa]. T [K]. Sh [K]. H [J/kg]. m [kg/s]. EntrainmentRatio = SuctionM/MotiveM [-]
+    Inputs:
+    Possible ejector names:
+    EjectorName = 'Multi Ejector HP 1875'  4 cartridge
+    EjectorName = 'Multi Ejector HP 3875'  6 cartridge
+    EjectorName = 'Multi Ejector LP 935'   4 cartridge
+    EjectorName = 'Multi Ejector LP 1935'  6 cartridge
+    EjectorName = 'CTM 1 LE 200' 
+    EjectorName = 'CTM 1 LE 400'Data_Ejector.py
+    EjectorName = 'CTM 2 LE 600' 
+    
+    MotiveP, MotiveT,MotiveH: Motive pressure, temperature and enthalpy respectively
+    SuctionP,SuctionSh,SuctionH: Suction pressure, superheat and enthalpy respectively
+    OutletP: Outlet pressure
+    
+    Possible values of ErrCode:
+    0  : No errors
+    -1  : Coolselector2 installation not found
+    -2  : Requested ejector not found
+    If ErrCode is larger than 0 then operation is outside ejector envelope:
+    A value of 1 indicates outside suction envelope
+    A value of 10 indicates outside motive envelope
+    A value of 100 indicates outside pressure lift envelope
+    These values are added so that e.g. ErrCode = 101 means outside suction and lift envelope (but inside motive envelope)
+    """
+
+    ej_type = [
+                'Multi Ejector HP 3875',       # HP
+                'Multi Ejector LP 1935',       # LP
+                'CTM 2 LE 600'                 # LE
+
+                ]
+
+    """Motive nozzle P , T and H values"""
+    mot_p = df['P7 ejector inlet'].tolist()
+    mot_t = df['T5 Inlet IHX 2'].tolist()
+    mot_h = df['h5 Enthalpy'].tolist()
+
+    """Suction flow P , T and H values"""
+    suc_p = df['P6 MT suction'].tolist()
+    suc_p_lp = df['P3 AHU evaporation'].tolist()
+
+    suc_t_lp = df['T7 Ejector inlet'].tolist()
+
+    suc_h_hp = [PSI('H', 'P', x, 'Q', 1, 'CO2') for x in suc_p]
+    suc_h_le = [PSI('H', 'P', x, 'Q', 0, 'CO2') for x in suc_p]
+    suc_h_lp = [PSI('H', 'P', suc_p_lp[i], 'T', suc_t_lp[i], 'CO2') for i in range(len(suc_p_lp))]
+
+    suc_sh_hp = list(np.array(df['T14 MT suction'].tolist())-np.array([PSI('T', 'P', x, 'Q', 1, 'CO2') for x in suc_p]))
+    suc_sh_le = [PSI('T', 'P', x, 'Q', 0, 'CO2') for x in suc_p]
+    suc_sh_lp = list(np.array(df['T7 Ejector inlet'].tolist()) - np.array([PSI('T', 'P', x, 'Q', 1, 'CO2') for x in suc_p_lp]))
+
+    """Outlet Pressure values"""
+    out_p = df['P2 receiver'].tolist()
+
+    """________________________________________________________________________________"""
+    """________________________________________________________________________________"""
+
+    """
+    Weekly mode of ejectors ::::
+
+    W28 :    LP1   HP1   LE1
+    W29 :    LP1   HP0   LE1
+    W30 :    LP1   HP0   LE0
+    W31 :    LP1   HP1   LE0
+    W32 :    LP0   HP0   LE1
+    W33 :    LP0   HP0   LE0
+    W34 :    LP0   HP1   LE0
+    W35 :    LP0   HP1   LE1
+    """
+
+    """ Weekly mode for each ejector running mode  :  """
+    hp_st = [1, 0, 0, 1, 0, 0, 1, 1]   # State of ejector
+    lp_st = [1, 1, 1, 1, 0, 0, 0, 0]   # State of ejector
+    le_st = [1, 1, 0, 0, 1, 0, 0, 1]   # State of ejector
+
+    """   Inputs for DLL function   """
+    """@@@@@@@@@@@@@@@@@@@@@      Check value selected for SH      """
+    eng = matlab.engine.start_matlab()
+
+    """ HP """
+    mmhp  = []         # Motive mass flow in [kg/s]
+    smhp  = []         # Suction mass flow in [kg/s]
+    rmshp = []        # Motive to suction mass flow ratio
+
+    """ LP """
+    mmlp  = []         # Motive mass flow in [kg/s]
+    smlp  = []         # Suction mass flow in [kg/s]
+    rmslp = []        # Motive to suction mass flow ratio
+
+    """ LE """
+    mmle  = []         # Motive mass flow in [kg/s]
+    smle  = []         # Suction mass flow in [kg/s]
+    rmsle = []        # Motive to suction mass flow ratio
+
+    for i in range(len(mot_p)):
+
+        """HP ejector calculation from dll """
+        if hp_st[w] == 1:
+            # print(str(ej_type[0]), int(mot_p[i]), int(mot_t[i]), int(mot_h[i]), int(suc_p[i]), int(suc_sh_hp[i]), int(suc_h_hp[i]), int(out_p[i]))
+            # print(eng.EjectorRom(str(ej_type[0]), int(mot_p[i]), int(mot_t[i]), int(mot_h[i]), int(suc_p[i]), int(suc_sh_hp[i]), int(suc_h_hp[i]), int(out_p[i]), nargout=4))
+            ej_hp = list(eng.EjectorRom(str(ej_type[0]), int(mot_p[i]), int(mot_t[i]), int(mot_h[i]), int(suc_p[i]), int(suc_sh_hp[i]), int(suc_h_hp[i]), int(out_p[i]), nargout=4))
+            mmhp .append(ej_hp[1])
+            smhp .append(ej_hp[2])
+            rmshp.append(ej_hp[3])
+
+        elif hp_st[w] == 0:
+            mmhp .append(0)
+            smhp .append(0)
+            rmshp.append(0)
+
+        """LP ejector calculation from dll """
+        if lp_st[w] == 1:
+
+            ej_lp = list(eng.EjectorRom(str(ej_type[1]), int(mot_p[i]), int(mot_t[i]), int(mot_h[i]), int(suc_p_lp[i]), int(suc_sh_lp[i]), int(suc_h_lp[i]), int(out_p[i]), nargout=4))
+            mmlp .append(ej_lp[1])
+            smlp .append(ej_lp[2])
+            rmslp.append(ej_lp[3])
+
+        elif lp_st[w] == 0:
+            mmlp .append(0)
+            smlp .append(0)
+            rmslp.append(0)
+
+        """Liq ejector calculation from dll """
+        if le_st[w] == 1:
+
+            ej_le = list(eng.EjectorRom(str(ej_type[2]), int(mot_p[i]), int(mot_t[i]), int(mot_h[i]), int(suc_p[i]), int(suc_sh_le[i]), int(suc_h_le[i]), int(out_p[i]), nargout=4))
+            mmle .append(ej_le[1])
+            smle .append(ej_le[2])
+            rmsle.append(ej_le[3])
+
+        elif le_st[w] == 0:
+
+            mmle .append(0)
+            smle .append(0)
+            rmsle.append(0)
+
+        print(i)
+
+    """ 
+    Accounting for number of ejectors in the system :
+    
+                2 # of HP
+                2 # of LP
+                1 # of LE
+    """
+
+    mmhp = list(np.array(mmhp)*2)  # Motive mass flow in [kg/s]
+    smhp = list(np.array(smhp)*2)  # Suction mass flow in [kg/s]
+
+    mmlp = list(np.array(mmlp)*2)  # Motive mass flow in [kg/s]
+    smlp = list(np.array(smlp)*2)  # Suction mass flow in [kg/s]
+
+    """Plot (remove later)"""
+    time = df['time'].tolist()
+    plot_3(time,mmhp , smhp , rmshp, ['time','motive','suction','ratio'],weeknum )
+
+    """__________________DF Update with Ej data______________________________"""
+    """__________________DF Update with Ej data______________________________"""
+
+    df = df.assign(mmhp=mmhp)
+    df = df.assign(smhp=smhp)
+    df = df.assign(rmshp=rmshp)
+    df = df.assign(mmlp=mmlp)
+    df = df.assign(smlp=smlp)
+    df = df.assign(rmslp=rmslp)
+    df = df.assign(mmle=mmle)
+    df = df.assign(smle=smle)
+    df = df.assign(rmsle=rmsle)
+
+    """_______________________________ DF To CSV ____________________________"""
+    """_______________________________ DF To CSV ____________________________"""
+
+    df.to_csv("Data_" + str(weeknum))
+
+plt.show()

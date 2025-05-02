@@ -1,0 +1,43 @@
+AC DX is back up air conditioning activated (Direct expansion) and ejector AC not activated (ACLP ejector off)
+ALC Adaptive liquid management, if is off means that liquid ejector is not working
+
+
+
+AK-PC 782 A – Pack controller (LT, MT, IT compressors, Gas cooler, HP multi-ejector control)
+AK-PC 781 A – LP multi-ejector control
+CTR1 Calor UTA - Air handling unit 1 - Heating mode control
+CTR2 Calor UTA - Air handling unit 2 - Heating mode control
+Controlo Inj. UTA1 - Air handling unit 1 - Cooling mode control
+Controlo Inj. UTA2 - Air handling unit 2 - Cooling mode control
+Contador Energia – Power meter
+
+
+1, Week 28 AC LP on + HP on + ALC on (July 11 Thursday 17h15),  already activated the AC Low pressure multi-ejector ON:17h15, July 11,
+2, Week 29 AC LP on + HP off + ALC on (July 18 Thursday 16h25)
+3, Week 30 AC LP on + HP off + ALC off (July 25 Thursday 17h00),flooded mode (ALC OFF), MT suction setpoint changed from -4 to -8.
+4, Week 31 AC LP on + HP on + ALC off (August 1 Thursday 17h30)
+5, Week 32 AC DX on + HP off + ALC on (August 8 Thursday 16h30)
+6, Week 33 AC DX on + HP off + ALC off (August 15 Thursday 17h15)
+7, Week 34 AC DX on + HP on + ALC off (August 22 Thursday 16h30)
+8, Week 35 AC DX on + HP on + ALC on (August 29 Thursday 17h30)
+
+AK-PC 782 A – Pack controller (LT, MT, IT compressors, Gas cooler, HP multi-ejector control)
+AK-PC 781 A – LP multi-ejector control
+CTR1 Calor UTA - Air handling unit 1 - Heating mode control
+CTR2 Calor UTA - Air handling unit 2 - Heating mode control
+Controlo Inj. UTA1 - Air handling unit 1 - Cooling mode control
+Controlo Inj. UTA2 - Air handling unit 2 - Cooling mode control
+Contador Energia – Power meter
+
+
+W28_ACLP1_HP1_ALC1 = "CNT-Porto Mós CNT-Porto Mós 07181621.csv"
+W29_ACLP1_HP0_ALC1 = "CNT-Porto Mós CNT-Porto Mós 07251740.csv"
+W30_ACLP1_HP0_ALC0 = "CNT-Porto Mós CNT-Porto Mós 08011828.csv"
+W31_ACLP1_HP1_ALC0 = "CNT-Porto Mós CNT-Porto Mós 08081807.csv"
+W32_ACDX1_HP0_ALC1 = "CNT-Porto Mós CNT-Porto Mós 08141822.csv"
+W33_ACDX1_HP0_ALC0 = "CNT-Porto Mós CNT-Porto Mós 08221642.csv"
+W34_ACDX1_HP1_ALC0 = "CNT-Porto Mós CNT-Porto Mós 08291846.csv"
+W35_ACDX1_HP1_ALC1 = "CNT-Porto Mós CNT-Porto Mós 09111019.csv"
+
+W28_ACLP1_HP1_ALC1, W29_ACLP1_HP0_ALC1, W30_ACLP1_HP0_ALC0, W31_ACLP1_HP1_ALC0, W32_ACDX1_HP0_ALC1, W33_ACDX1_HP0_ALC0, W34_ACDX1_HP1_ALC0, W35_ACDX1_HP1_ALC1
+
