@@ -66,16 +66,16 @@ r'\6FTE50KTC'
 ]
 
 colname = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10 ','nn']
-dfbit = pd.read_csv(r'C:\Users\U375297\Documents\PycharmProjects\Danfoss\BitzerPoly' + bitlis[0] + '.csv', names=colname,
+dfbit = pd.read_csv(r'BitzerPoly' + bitlis[0] + '.csv', names=colname,
                     sep=';', na_filter=True, skiprows=28, nrows=2, decimal=",")
 for i in bitlis:
-    dfb = pd.read_csv(r'C:\Users\U375297\Documents\PycharmProjects\Danfoss\BitzerPoly' + i + '.csv',names=colname,
+    dfb = pd.read_csv(r'BitzerPoly' + i + '.csv',names=colname,
                              sep=';', na_filter=True, skiprows=28, nrows=2,decimal=",")
     """ , float_precision='round_trip'   add this to get all digits """
     namechange = i[1:]
     dfb.rename(index={'P [W]': 'P' + namechange}, inplace=True)  # can also use
     dfb.rename(index={'m [kg/h]': 'M' + namechange}, inplace=True)  # can also use
-    dfbit = dfbit.append(dfb)
+    dfbit = dfbit._append(dfb)
 
 del dfbit['nn']
 dfbit = dfbit.transpose()
@@ -123,9 +123,12 @@ for iiii in [ 28, 29, 30, 31, 32, 33, 34, 35]:
 
     dfc = dfc.apply(pd.to_numeric, errors='coerce')
     """DROP NAN acting only on the COLUMNS with more than 1000 nan values"""
-    dfc = dfc.dropna(axis='columns', how='all', thresh=1000 / step_c, subset=None, inplace=False)
+    dfc = dfc.dropna(axis='columns', how='all')
+    dfc = dfc.dropna(axis='columns', thresh=1000 / step_c)
+
     """DROP NAN acting only on the ROWS with any nan values"""
-    dfc = dfc.dropna(axis='rows', how='any', thresh=None, subset=None, inplace=False)
+    dfc = dfc.dropna(axis='rows', how='any')
+
     dfc = dfc.round({"time": 0})
 
     time_C = dfc['time'].tolist()
@@ -133,11 +136,18 @@ for iiii in [ 28, 29, 30, 31, 32, 33, 34, 35]:
     """________________________________________________________________________________"""
 
     for j in range(10):
+        # Create a list of column indices to drop to avoid modifying the DataFrame during iteration
+        drop_columns = []
+
         for i in range(1, len(dfc.columns) - 1):
-            if i >= len(dfc.columns):
+            if i >= len(dfc.columns):  # Ensures index stays within bounds
                 break
-            if dfc.isnull().iloc[6][i]:
-                dfc.drop(dfc.columns[i], axis=1, inplace=True)
+
+            if dfc.isnull().iloc[6, i]:  # Uses a tuple for indexing to follow best practices
+                drop_columns.append(dfc.columns[i])  # Collect column names to drop later
+
+        # Drop all columns at once to prevent iteration issues
+        dfc.drop(columns=drop_columns, inplace=True)
 
     """___________________________________________________________________________"""
 
@@ -703,14 +713,21 @@ for iiii in [ 28, 29, 30, 31, 32, 33, 34, 35]:
     print(len(cd[4]))
     dict_df.update({'m3m4': m3m4})
 
-    df_mmt = pd.read_csv('Data_Calc/Data_Week_' + str(iiii), sep=',', na_filter=True, skip_blank_lines=True, low_memory=False)
-    dict_df.update({'mmt': df_mmt['mmt'].tolist()})
+    df_mmt = pd.read_csv('Data_Calc/Data__Week_' + str(iiii), sep=',', na_filter=True, skip_blank_lines=True, low_memory=False)
 
-    df_mit = pd.read_csv('Data_Calc/Data_mit_Week_' + str(iiii), sep=',', na_filter=True, skip_blank_lines=True,low_memory=False)
-    dict_df.update({'mit': df_mit['mit'].tolist()})
+    if 'mmt' in df_mmt.columns:
+        dict_df.update({'mmt': df_mmt['mmt'].tolist()})
+        print(len(df_mmt['mmt'].tolist()))
+        df_mit = pd.read_csv('Data_Calc/Data_mit_Week_' + str(iiii), sep=',', na_filter=True, skip_blank_lines=True,
+                             low_memory=False)
+        dict_df.update({'mit': df_mit['mit'].tolist()})
 
-    print(len(df_mmt['mmt'].tolist()))
-    print(len(df_mit['mit'].tolist()))
+        print(len(df_mit['mit'].tolist()))
+
+    else:
+        print("Column 'mmt' does not exist in df_mmt")
+
+
     """____________________________________________________________"""
     """______________       DataFrame format          _____________"""
     """____________________________________________________________"""
