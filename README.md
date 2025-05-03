@@ -14,11 +14,9 @@ This repository contains Python scripts for analyzing refrigeration system data,
 ## Installation
 
 Ensure you have the required dependencies installed before running the scripts:
+
+## Licence
 This project is intended for research and development purposes within the framework of Horizon 2020. 
-
-
-```bash
-pip install pandas numpy
 
 
 
